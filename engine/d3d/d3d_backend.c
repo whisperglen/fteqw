@@ -1954,7 +1954,8 @@ static void BE_ApplyUniforms(program_t *prog, struct programpermu_s *perm)
 			IDirect3DDevice9_SetVertexShaderConstantF(pD3DDev9, h, shaderstate.m_model, 4);
 			break;
 		case SP_E_VBLEND:
-			IDirect3DDevice9_SetVertexShaderConstantF(pD3DDev9, h, shaderstate.meshlist[0]->xyz_blendw, 2);
+			Vector4Set(param4, shaderstate.meshlist[0]->xyz_blendw[0], shaderstate.meshlist[0]->xyz_blendw[1], 0, 0);
+			IDirect3DDevice9_SetVertexShaderConstantF(pD3DDev9, h, param4, 1);
 			break;
 
 
@@ -2146,6 +2147,8 @@ static unsigned int BE_DrawMeshChain_SetupProgram(program_t *p)
 	pp = p->permu[perm];
 	if (!pp)
 	{
+		// Loading a permutation changes the device's bound shaders.
+		shaderstate.curperm = NULL;
 		p->permu[perm] = pp = Shader_LoadPermutation(p, perm);
 		if (!pp)
 		{	//failed? copy from 0 so we don't keep re-failing
@@ -2366,6 +2369,8 @@ static void BE_RenderMeshProgram(shader_t *s, unsigned int vertbase, unsigned in
 	pp = p->permu[perm];
 	if (!pp)
 	{
+		// Loading a permutation changes the device's bound shaders.
+		shaderstate.curperm = NULL;
 		p->permu[perm] = pp = Shader_LoadPermutation(p, perm);
 		if (!pp)
 		{	//failed? copy from 0 so we don't keep re-failing
@@ -2554,6 +2559,7 @@ static void BE_RenderMeshProgram(shader_t *s, unsigned int vertbase, unsigned in
 
 	IDirect3DDevice9_SetVertexShader(pD3DDev9, NULL);
 	IDirect3DDevice9_SetPixelShader(pD3DDev9, NULL);
+	shaderstate.curperm = NULL;
 }
 
 void D3D9BE_Cull(unsigned int cullflags)
